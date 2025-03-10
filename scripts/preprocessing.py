@@ -76,11 +76,14 @@ def remove_outliers(df, columns, threshold):
         ]
     return df_filtered
 
-def create_sequences(data, time_steps, target_idx, steps_ahead):
+def create_sequences(data, time_steps, target_idx, steps_ahead=1):
     X, y = [], []
-    for i in tqdm(range(len(data) - time_steps), desc="Creating sequences"):
+    for i in tqdm(range(len(data) - time_steps - steps_ahead + 1), desc="Creating sequences"):
         X.append(data[i:i + time_steps, :])
-        y.append(data[i + time_steps:i + time_steps + steps_ahead, target_idx])
+        if steps_ahead == 1:
+            y.append(data[i + time_steps, target_idx])
+        else:
+            y.append(data[i + time_steps:i + time_steps + steps_ahead, target_idx])
     return np.array(X), np.array(y)
 
 def preprocess_data():

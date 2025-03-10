@@ -83,13 +83,15 @@ def build_model(input_shape, cfg):
         lstm_units=cfg['lstm_units'],
         dropout_rate=cfg['dropout_rate'],
         learning_rate=cfg['learning_rate'],
-        steps_ahead=5
+        steps_ahead=1
     )
     model.summary(print_fn=lambda x: logger.info(x))
     return model
 
 def train_model(model, X_train, y_train, X_val, y_val, cfg):
     """Train the model with callbacks and configuration parameters."""
+    if X_train.shape[0] == 0 or y_train.shape[0] == 0:
+        raise ValueError("Training data is empty")
     callbacks = [
         EarlyStopping(
             monitor='val_loss',
