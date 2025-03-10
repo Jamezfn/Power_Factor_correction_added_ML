@@ -7,7 +7,8 @@ def create_lstm_model(
     input_shape: Tuple[int, int],
     lstm_units: List[int] = [64, 32],
     dropout_rate: float = 0.2,
-    learning_rate: float = 0.001
+    learning_rate: float = 0.001,
+    steps_ahead: int = 1
 ) -> Model:
     
     if not lstm_units or any(units <= 0 for units in lstm_units):
@@ -23,7 +24,7 @@ def create_lstm_model(
             dropout=dropout_rate if not return_sequences else 0.0
         )(x)
     x = Dropout(dropout_rate)(x)
-    outputs = Dense(1, activation='linear')(x)
+    outputs = Dense(steps_ahead, activation='linear')(x)
     model = Model(inputs=inputs, outputs=outputs)
     model.compile(
         optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
@@ -38,7 +39,8 @@ if __name__ == "__main__":
         input_shape,
         lstm_units=[64, 32],
         dropout_rate=0.2,
-        learning_rate=0.001
+        learning_rate=0.001,
+        steps_ahead=1
     )
     model.summary()
     tf.keras.backend.clear_session()

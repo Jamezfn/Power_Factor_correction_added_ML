@@ -76,11 +76,11 @@ def remove_outliers(df, columns, threshold):
         ]
     return df_filtered
 
-def create_sequences(data, time_steps, target_idx):
+def create_sequences(data, time_steps, target_idx, steps_ahead):
     X, y = [], []
     for i in tqdm(range(len(data) - time_steps), desc="Creating sequences"):
         X.append(data[i:i + time_steps, :])
-        y.append(data[i + time_steps, target_idx])
+        y.append(data[i + time_steps:i + time_steps + steps_ahead, target_idx])
     return np.array(X), np.array(y)
 
 def preprocess_data():
@@ -119,7 +119,8 @@ def preprocess_data():
     logger.info("Starting sequence generation...")
     with timer("Sequence generation"):
         time_steps = config.CONFIG['time_steps']
-        X, y = create_sequences(data_scaled, time_steps, target_idx=0)
+        steps_ahead = 1  # Define steps_ahead as needed
+        X, y = create_sequences(data_scaled, time_steps, target_idx=0, steps_ahead=steps_ahead)
         logger.debug(f"Created sequences with shape: {X.shape}, target shape: {y.shape}")
 
     logger.info("Splitting data into training, validation, and test sets...")
