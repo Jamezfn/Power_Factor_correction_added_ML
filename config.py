@@ -8,7 +8,7 @@ CONFIG = {
     'time_steps': 50,
     'train_split': 0.7,
     'val_split': 0.2,
-    'outlier_threshold': 1.5,
+    'outlier_threshold': 3.0,
 
     # Preprocessed data and scaler output
     'data_dir': os.path.join(BASE_DIR, 'data'),
@@ -17,7 +17,7 @@ CONFIG = {
     # Model training configuration (for reference)
     'epochs': 20,
     'batch_size': 32,
-    'lstm_units': [64, 32],
+    'lstm_units': [128, 64, 32],
     'dropout_rate': 0.2,
     'bidirectional': False,
     'use_batchnorm': False,

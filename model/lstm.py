@@ -5,7 +5,7 @@ from typing import List, Tuple
 
 def create_lstm_model(
     input_shape: Tuple[int, int],
-    lstm_units: List[int] = [64, 32],
+    lstm_units: List[int] = [128, 64, 32],
     dropout_rate: float = 0.2,
     learning_rate: float = 0.001,
     steps_ahead: int = 1
@@ -28,7 +28,7 @@ def create_lstm_model(
     model = Model(inputs=inputs, outputs=outputs)
     model.compile(
         optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
-        loss='mae', 
+        loss='mse', 
         metrics=['mae']
     )
     return model

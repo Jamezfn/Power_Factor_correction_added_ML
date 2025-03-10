@@ -2,7 +2,7 @@ import os
 import logging
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, RobustScaler  
 from tqdm import tqdm
 from contextlib import contextmanager
 import time
@@ -86,6 +86,20 @@ def create_sequences(data, time_steps, target_idx, steps_ahead=1):
             y.append(data[i + time_steps:i + time_steps + steps_ahead, target_idx])
     return np.array(X), np.array(y)
 
+def stratify_split(df, power_col='Power', train_split=0.7, val_split=0.2, bins=5):
+    df['power_bin'] = pd.cut(df[power_col], bins=bins, include_lowest=True)
+    grouped = df.groupby('power_bin')
+    train_data, val_data, test_data = [], [], []
+    for _, group in grouped:
+        group = group.sample(frac=1, random_state=42)
+        n = len(group)
+        train_end = int(n * train_split)
+        val_end = train_end + int(n * val_split)
+        train_data.append(group.iloc[:train_end])
+        val_data.append(group.iloc[train_end:val_end])
+        test_data.append(group.iloc[val_end:])
+    return (pd.concat(train_data), pd.concat(val_data), pd.concat(test_data))
+
 def preprocess_data():
     validate_config()
     logger.info("Configuration validated successfully.")
@@ -112,32 +126,42 @@ def preprocess_data():
         logger.info(f"Removed {initial_rows - len(df)} rows with outliers.")
     logger.info("Data cleaning completed.")
 
-    logger.info("Starting feature scaling...")
+    logger.info("Splitting data into training, validation, and test sets using stratification...")
+    with timer("Data splitting"):
+        df_train, df_val, df_test = stratify_split(
+            df,
+            power_col='Power',
+            train_split=config.CONFIG['train_split'],
+            val_split=config.CONFIG['val_split'],
+            bins=5
+        )
+        logger.info(f"Training set size: {len(df_train)}, Validation set size: {len(df_val)}, "
+                    f"Test set size: {len(df_test)}")
+
+    logger.info("Starting feature scaling using RobustScaler...")
     with timer("Feature scaling"):
-        scaler = MinMaxScaler()
+        scaler = RobustScaler()
         feature_columns = ['Power', 'Current', 'PF']
-        data_scaled = scaler.fit_transform(df[feature_columns])
+        scaler.fit(df_train[feature_columns])
+        train_scaled = scaler.transform(df_train[feature_columns])
+        val_scaled = scaler.transform(df_val[feature_columns])
+        test_scaled = scaler.transform(df_test[feature_columns])
     logger.info("Feature scaling completed.")
 
     logger.info("Starting sequence generation...")
     with timer("Sequence generation"):
         time_steps = config.CONFIG['time_steps']
         steps_ahead = 1 
-        X, y = create_sequences(data_scaled, time_steps, target_idx=0, steps_ahead=steps_ahead)
-        logger.debug(f"Created sequences with shape: {X.shape}, target shape: {y.shape}")
-
-    logger.info("Splitting data into training, validation, and test sets...")
-    with timer("Data splitting"):
-        train_size = int(len(X) * config.CONFIG['train_split'])
-        val_size = int(len(X) * config.CONFIG['val_split'])
-        test_size = len(X) - train_size - val_size
-
-        X_train, y_train = X[:train_size], y[:train_size]
-        X_val, y_val = X[train_size:train_size + val_size], y[train_size:train_size + val_size]
-        X_test, y_test = X[train_size + val_size:], y[train_size + val_size:]
-
-        logger.info(f"Training set shape: {X_train.shape}, Validation set shape: {X_val.shape}, "
-                    f"Test set shape: {X_test.shape}")
+        df_train = df_train.sort_values('Time')
+        df_val = df_val.sort_values('Time')
+        df_test = df_test.sort_values('Time')
+        X_train, y_train = create_sequences(train_scaled, time_steps, target_idx=0, steps_ahead=steps_ahead)
+        X_val, y_val = create_sequences(val_scaled, time_steps, target_idx=0, steps_ahead=steps_ahead)
+        X_test, y_test = create_sequences(test_scaled, time_steps, target_idx=0, steps_ahead=steps_ahead)
+        logger.debug(f"Training sequences shape: {X_train.shape}, target shape: {y_train.shape}")
+        logger.debug(f"Validation sequences shape: {X_val.shape}, target shape: {y_val.shape}")
+        logger.debug(f"Test sequences shape: {X_test.shape}, target shape: {y_test.shape}")
+    logger.info(f"Created sequences - Training: {X_train.shape}, Validation: {X_val.shape}, Test: {X_test.shape}")
 
     output_dir = config.CONFIG['data_dir']
     os.makedirs(output_dir, exist_ok=True)
@@ -152,8 +176,8 @@ def preprocess_data():
     logger.info(f"Preprocessed data and scaler saved in folder: {output_dir}")
 
     quality_metrics = {
-        "total_samples": len(X),
-        "features_shape": X.shape,
+        "total_samples": len(X_train) + len(X_val) + len(X_test),
+        "features_shape": X_train.shape[1:],
         "missing_values": df.isnull().sum().to_dict(),
         "feature_ranges": {col: (df[col].min(), df[col].max()) for col in numeric_features}
     }
