@@ -21,7 +21,7 @@ CONFIG = {
     'dropout_rate': 0.2,
     'bidirectional': False,
     'use_batchnorm': False,
-    'learning_rate': 0.001,
+    'learning_rate': 0.0005,
 
     # Evaluation configuration
     'final_model_filename': 'pfc_model.h5',
