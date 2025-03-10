@@ -122,7 +122,7 @@ def preprocess_data():
     logger.info("Starting sequence generation...")
     with timer("Sequence generation"):
         time_steps = config.CONFIG['time_steps']
-        steps_ahead = 1  # Define steps_ahead as needed
+        steps_ahead = 1 
         X, y = create_sequences(data_scaled, time_steps, target_idx=0, steps_ahead=steps_ahead)
         logger.debug(f"Created sequences with shape: {X.shape}, target shape: {y.shape}")
 
