@@ -1,0 +1,12 @@
+pandas
+numpy
+matplotlib
+seaborn
+tensorflow
+statsmodels
+scikit-learn
+tqdm
+contextlib
+logging
+times
+tensorflow

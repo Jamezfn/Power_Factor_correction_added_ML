@@ -1,0 +1,4 @@
+class ModelConfig:
+    DEFAULT_LSTM_UNITS = [64, 32]
+    DEFAULT_DROPOUT_RATE = 0.2
+    DEFAULT_LEARNING_RATE = 0.001
