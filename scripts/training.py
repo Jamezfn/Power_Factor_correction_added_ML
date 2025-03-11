@@ -76,6 +76,12 @@ def load_data(cfg):
 
     return X_train, y_train, X_val, y_val
 
+def weighted_mse(y_true, y_pred):
+    """Custom weighted Mean Squared Error loss function."""
+    error = y_true - y_pred
+    weight = tf.where((y_true >= 185) & (y_true <= 190), 2.0, 1.0)  # Double weight for gap
+    return tf.reduce_mean(weight * tf.square(error))
+
 def build_model(input_shape, cfg):
     """Build and compile the LSTM model using parameters from the configuration."""
     model = create_lstm_model(
@@ -85,6 +91,13 @@ def build_model(input_shape, cfg):
         learning_rate=cfg['learning_rate'],
         steps_ahead=1
     )
+    
+    model.compile(
+        optimizer=tf.keras.optimizers.Adam(learning_rate=cfg['learning_rate']),
+        loss=weighted_mse,
+        metrics=['mae']
+    )
+
     model.summary(print_fn=lambda x: logger.info(x))
     return model
 

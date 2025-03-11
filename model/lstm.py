@@ -6,8 +6,8 @@ from typing import List, Tuple
 def create_lstm_model(
     input_shape: Tuple[int, int],
     lstm_units: List[int] = [128, 64, 32],
-    dropout_rate: float = 0.2,
-    learning_rate: float = 0.001,
+    dropout_rate: float = 0.3,
+    learning_rate: float = 0.0005,
     steps_ahead: int = 1
 ) -> Model:
     
@@ -24,6 +24,7 @@ def create_lstm_model(
             dropout=dropout_rate if not return_sequences else 0.0
         )(x)
     x = Dropout(dropout_rate)(x)
+    x = Dense(16, activation='relu')(x)
     outputs = Dense(steps_ahead, activation='linear')(x)
     model = Model(inputs=inputs, outputs=outputs)
     model.compile(

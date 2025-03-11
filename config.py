@@ -4,7 +4,7 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 CONFIG = {
     # Data configuration (for preprocessing)
-    'data_path': os.path.join(BASE_DIR, 'rawData', 'pfc_lstm_data.csv'),
+    'data_path': os.path.join(BASE_DIR, 'rawData', 'augmented_data.csv'),
     'time_steps': 50,
     'train_split': 0.7,
     'val_split': 0.2,
@@ -18,12 +18,15 @@ CONFIG = {
     'epochs': 20,
     'batch_size': 32,
     'lstm_units': [128, 64, 32],
-    'dropout_rate': 0.2,
+    'dropout_rate': 0.3,
     'bidirectional': False,
     'use_batchnorm': False,
     'learning_rate': 0.0005,
 
     # Evaluation configuration
     'final_model_filename': 'pfc_model.h5',
-    'plot_save_dir': os.path.join(BASE_DIR, 'plots')
+    'plot_save_dir': os.path.join(BASE_DIR, 'plots'),
+
+    #Augmentation configuration
+    'path_to_augmented_data': os.path.join(BASE_DIR, 'rawData', 'augmented_data.csv')
 }

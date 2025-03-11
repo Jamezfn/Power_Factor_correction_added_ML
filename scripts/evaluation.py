@@ -62,29 +62,26 @@ def load_model(config):
 def evaluate_model(model, X_test, y_test, scaler):
     """Evaluate the model and compute detailed metrics."""
     y_pred = model.predict(X_test, verbose=0)
-    
-    # Handle multi-step predictions
+
     steps_ahead = y_test.shape[1] if y_test.ndim > 1 else 1
     if y_test.ndim == 1:
         y_test = y_test.reshape(-1, 1)
     if y_pred.ndim == 1:
         y_pred = y_pred.reshape(-1, 1)
     
-    # Inverse transform: Pad with zeros for other features since scaler expects 3 columns
-    num_features = 3  # Power, Current, PF
+    num_features = 3
     y_test_padded = np.pad(y_test, ((0, 0), (0, num_features - 1)), mode='constant')
     y_pred_padded = np.pad(y_pred, ((0, 0), (0, num_features - 1)), mode='constant')
     try:
-        y_test_orig = scaler.inverse_transform(y_test_padded)[:, 0]  # Take only Power column
+        y_test_orig = scaler.inverse_transform(y_test_padded)[:, 0]
         y_pred_orig = scaler.inverse_transform(y_pred_padded)[:, 0]
     except ValueError as e:
         logger.error(f"Scaler inverse transform failed: {e}")
         raise ValueError(f"Ensure scaler was fitted correctly: {e}")
-    
-    offset = 0.15
-    y_pred_orig_adjusted = y_pred_orig + offset
-    y_pred_orig = y_pred_orig_adjusted
-    
+
+    # y_pred_orig_adjusted = y_pred_orig + offset
+    # y_pred_orig = y_pred_orig_adjusted 
+
     if steps_ahead == 1:
         y_test_orig = y_test_orig.flatten()
         y_pred_orig = y_pred_orig.flatten()
@@ -109,6 +106,7 @@ def evaluate_model(model, X_test, y_test, scaler):
     logger.info(f"Number of Outliers (beyond ±3σ): {outliers}")
     
     return y_test_orig, y_pred_orig, rmse, mae
+
 
 def plot_results(y_test_orig, y_pred_orig, config, figsize=(10, 6), dpi=300):
     """Plot actual vs predicted values."""
