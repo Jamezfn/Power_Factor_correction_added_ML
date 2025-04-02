@@ -24,7 +24,8 @@ CONFIG = {
     'learning_rate': 0.0005,
 
     # Evaluation configuration
-    'final_model_filename': 'pfc_model.h5',
+    #'final_model_filename': 'pfc_model.h5',
+    'final_model_filename': os.path.join(BASE_DIR, 'data', 'pfc_model.h5'),
     'plot_save_dir': os.path.join(BASE_DIR, 'plots'),
 
     # Augmentation configuration
