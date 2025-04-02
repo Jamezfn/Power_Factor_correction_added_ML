@@ -9,14 +9,21 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+
 MODEL_PATH = os.path.join(config.CONFIG['data_dir'], config.CONFIG['final_model_filename'])
 model = None
+
+def weighted_mse(y_true, y_pred):
+    """Custom weighted Mean Squared Error loss function."""
+    error = y_true - y_pred
+    weight = tf.where((y_true >= 185) & (y_true <= 190), 2.0, 1.0)
+    return tf.reduce_mean(weight * tf.square(error))
 
 def get_model():
     global model
     if model is None:
         logger.info("Loading model from path: %s", MODEL_PATH)
-        model = tf.keras.models.load_model(MODEL_PATH)
+        model = tf.keras.models.load_model(MODEL_PATH, custom_objects={'weighted_mse': weighted_mse})
     return model
 
 dt = config.CONFIG['dt']
@@ -26,12 +33,12 @@ def predict():
     try:
         logger.info("Received prediction request")
         model = get_model()
+        
         data = request.get_json(force=True)
-
         if not isinstance(data, dict):
             logger.error("Invalid JSON format: expected a dictionary")
             return jsonify({"error": "Invalid JSON format"}), 400
-
+        
         required_fields = ["input"]
         for field in required_fields:
             if field not in data:
@@ -44,16 +51,17 @@ def predict():
             return jsonify({"error": "No input data provided."}), 400
 
         input_array = np.array(input_data, dtype=np.float32)
-        expected_shape = (None, 5)
-        if len(input_array.shape) != 2 or input_array.shape[1] != expected_shape[1]:
+        logger.info("Received input array with shape: %s", input_array.shape)
+
+        expected_shape = (50, 3)
+        if len(input_array.shape) != 3 or input_array.shape[1:] != expected_shape:
             logger.error("Invalid input shape: %s", input_array.shape)
-            return jsonify({"error": f"Input must have shape {expected_shape}"}), 400
+            return jsonify({"error": f"Input must have shape (None, {expected_shape[0]}, {expected_shape[1]})"}), 400
 
         power_pred = model.predict(input_array)
         energy_pred = power_pred * dt
         
         logger.info("Prediction successful, input shape: %s", input_array.shape)
-        
         return jsonify({
             "power_predictions": power_pred.tolist(),
             "energy_predictions": energy_pred.tolist(),
@@ -68,6 +76,7 @@ def predict():
     except Exception as e:
         logger.error("Unexpected error: %s", str(e), exc_info=True)
         return jsonify({"error": f"Unexpected error: {str(e)}"}), 500
+
 
 @app.route('/health', methods=['GET'])
 def health():
