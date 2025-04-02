@@ -27,6 +27,9 @@ CONFIG = {
     'final_model_filename': 'pfc_model.h5',
     'plot_save_dir': os.path.join(BASE_DIR, 'plots'),
 
-    #Augmentation configuration
-    'path_to_augmented_data': os.path.join(BASE_DIR, 'rawData', 'augmented_data.csv')
+    # Augmentation configuration
+    'path_to_augmented_data': os.path.join(BASE_DIR, 'rawData', 'augmented_data.csv'),
+    
+    # Energy prediction configuration
+    'dt': 60  # Time step in seconds for energy integration
 }
